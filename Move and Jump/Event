@@ -1,0 +1,121 @@
+
+/* 用到的object和其他资源列表，请根据实际情况替换
+	obj_wall：静止障碍
+	obj_elevator：动态障碍，可水平或垂直移动
+*/
+
+/*
+	hp相关系列操作
+*/
+
+// 死亡判定
+if hp_ <= 0 game_restart();
+
+// HP相关判定结束，更新HP
+previous_hp_ = hp_;
+
+/*
+	移动系列操作
+*/
+
+// 水平移动操作
+var hinput = keyboard_check(ord("D")) - keyboard_check(ord("A"));
+if (hinput != 0){
+	hspeed_ += acceleration_ * hinput;
+	hspeed_ = clamp(hspeed_, -max_hspeed_,max_hspeed_);
+	image_speed = .6;
+}
+else{
+	if (hspeed_ * sign(hspeed_)) < 0.01{
+		hspeed_ = 0;
+	}
+	hspeed_ = lerp(hspeed_,0,friction_);
+	image_speed = 0;
+	image_index = STAND_IMAGE_;
+}
+
+/*
+	位置判定、跳跃、疾跑系列操作
+	obj_wall为静止障碍。obj_elevator为移动障碍，可随其移动
+	与obj_elevator的位置判定多了3，是因为有垂直移动的obj_elevator每帧向下2像素，所以多加2
+	上面这条可根据实际情况调整
+*/
+
+// 在空中下坠的判定
+if !place_meeting(x,y+1,obj_wall) && !place_meeting(x,y+3,obj_elevator){
+	vspeed_ += gravity_;
+	// 如果能二段跳，再赋予一次允许跳跃的状态，否则就不能再跳跃了
+	if double_jump_check_ jump_check_ = true;
+	else jump_check_ = false;
+	
+	on_elevator_check_ = false;
+	image_speed = 0;
+	image_index = JUMP_IMAGE_;
+}
+// 不在空中的判定
+else {	
+	// 在移动障碍上的判定
+	if place_meeting(x,y+3,obj_elevator){						// 跟随电梯移动
+		var elevator = instance_nearest(x, y+3,obj_elevator)	// 获取最近的电梯
+		vspeed_ = elevator.vspeed_;								// 垂直速度为电梯垂直速度
+		on_elevator_check_ = true;								// 在电梯上的判定
+	}
+	else on_elevator_check_ = false;
+	jump_check_ = true;						// 不在空中，可以跳跃
+	double_jump_check_ = false;				// 不在空中，因此不是跳跃状态，因此不能二段跳
+	if keyboard_check(vk_lshift){			// 不在空中，可以按shift疾跑
+		acceleration_ = 1.5;				// 水平加速度变大
+		max_hspeed_ = 9;					// 最大水平速度变大
+		image_speed = image_speed*1.5;		// 移动动画速度变快
+	}
+	else{
+		acceleration_ = 1;					// 还原水平加速度
+		max_hspeed_ = 6;					// 还原最大水平速度
+		image_speed = image_speed/1.5;		// 还原移动动画速度
+	}
+}
+
+// 跳跃判定，需要上述位置判定中判定可以跳跃
+if(jump_check_ == true){
+	if (keyboard_check_pressed(ord("W"))){					// 按W跳跃
+		vspeed_ = jump_height_;	
+		if !double_jump_check_ double_jump_check_ = true;	// 如果可以跳跃但不可以二段跳，说明是一段跳，则允许继续二段跳
+		else {
+			double_jump_check_ = false;						// 否则不能再跳跃了，不能二段跳是因为二段跳状态会在上面重置跳跃状态
+			jump_check_ = false;
+		}
+	}	
+}
+
+// 从过高处跳上电梯，由于速度过高导致位置偏离的补正
+if(on_elevator_check_ == true){
+	var tmp_elevator = instance_nearest(x, y+3,obj_elevator)	//获取最近的电梯
+	if((tmp_elevator.y-y) < 32){
+		y = tmp_elevator.y - 32;
+	}
+}
+	
+// 墙和电梯重叠在一起时，用以下代码把角色挤出来
+if (collide(obj_wall) == 2) && (collide(obj_elevator) == 2) && (obj_elevator.vspeed_ != 0){
+	while (collide(obj_wall) != 0) || (collide(obj_elevator) != 0){
+		x = x + random_range(-64,64);
+		y = y + random_range(-64,64);
+	}
+	if safe_time_ == 0 {hp_ -= 20;}
+}
+
+// 一切速度判定结束，进行移动
+vspeed_ = min(vspeed_,max_vspeed_);	// 速度不能超过最大水平加速度
+x += hspeed_;
+y += vspeed_;
+
+// 移动时卡入墙体的位置修正
+if (hspeed_ == 0 && vspeed_ == 0 && collide(obj_wall) != 0){
+	var tmp_wall = instance_nearest(x-32, y-32,obj_wall)	//获取最近的墙
+	if((tmp_wall.x-x)*sign(tmp_wall.x-x) < 32){
+		x = tmp_wall.x - 32*sign(tmp_wall.x-x);
+	}
+	if((tmp_wall.y-y)*sign(tmp_wall.y-y) < 32){
+		y = tmp_wall.y - 32*sign(tmp_wall.y-y);
+	}
+}
