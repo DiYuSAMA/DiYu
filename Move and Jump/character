@@ -1,0 +1,31 @@
+————————————————————————————————————————————定义人物变量——————————————————————————————————————————————————————
+
+hspeed_ = 0;			// 初始水平速度，为0
+max_hspeed_ = 6;		// 最大水平速度，根据需要设定
+vspeed_ = 0;			// 初始垂直速度，为0
+max_vspeed_ = 32;		// 最大垂直速度，根据需要设定
+gravity_ = 1;			// 重力加速度
+acceleration_ = 1;		// 水平加速度
+jump_height_ = -16;		// 跳跃初速度
+friction_ = .3;			// 水平摩擦力
+
+jump_check_ = true;				// 可否跳跃的状态检测
+on_elevator_check_ = false;		// 在移动的电梯上的状态监测
+double_jump_check_ = false;		// 可否二段跳的状态检测
+
+max_hp_ = 100;					// 最大生命
+hp_ = max_hp_;					// 生命值
+previous_hp_ = hp_;				// 前一刻的生命值，用来判断是否受到伤害用
+safe_time_ = 0;					// 无敌时间
+safe_ = false;					// 是否无敌的判定
+
+max_cold_time_ = 30;			// 冷却时间
+coldtime_ = 0;					// 剩余冷却时间
+max_bullet_ = 20;				// 最大子弹数量
+num_bullet_ = max_bullet_;		// 剩余子弹数量
+shoot_force_hspeed_ = 0;		//射击后坐力产生的速度
+
+STAND_IMAGE_ = 3;				// 静止站立时的图片在移动gif里的编号
+JUMP_IMAGE_ = 5;				// 跳跃时的图片在移动gif里的编号
+
+//都是直接从别人那复制来的，学习用
